@@ -1,13 +1,34 @@
+# TunnelX Docker Compose — Behind Nginx Reverse Proxy
+#
+# This configuration exposes tunnelxd on high ports so Nginx on the host
+# can proxy traffic from standard ports 80/443.
+#
+# Port 7835 (agent control) is exposed directly — agents connect to it
+# without going through Nginx.
+#
+# Required environment variables (set in .env file):
+#   TUNNEL_DOMAIN   — your tunnel domain (e.g. tl.codesky.tech)
+#   ACME_EMAIL      — email for Let's Encrypt notices
+#   CF_API_TOKEN    — Cloudflare API token with Zone:DNS:Edit
+#
+# Usage:
+#   cp .env.example .env   # then edit .env
+#   docker compose up -d
+
 services:
   tunnelxd:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
     image: tunnelxd:latest
+    container_name: tunnelxd
     restart: unless-stopped
     ports:
-      - "80:8080"
-      - "443:8443" 
+      # HTTP redirect — Nginx proxies :80 → here
+      - "127.0.0.1:8080:8080"
+      # HTTPS tunnel traffic — Nginx stream-proxies :443 → here
+      - "127.0.0.1:8443:8443"
+      # Agent control port — exposed directly (not through Nginx)
       - "7835:7835"
     environment:
       - CF_API_TOKEN=${CF_API_TOKEN}
@@ -15,8 +36,8 @@ services:
       - tunnelx-data:/var/lib/tunnelx
     command:
       - serve
-      - --domain=${TUNNEL_DOMAIN:-tunnel.example.com}
-      - --public-url=https://${TUNNEL_DOMAIN:-tunnel.example.com}
+      - --domain=${TUNNEL_DOMAIN:-tl.codesky.tech}
+      - --public-url=https://${TUNNEL_DOMAIN:-tl.codesky.tech}
       - --db=/var/lib/tunnelx/tunnelx.db
       - --tls-mode=${TLS_MODE:-acme}
       - --acme-email=${ACME_EMAIL}
@@ -28,7 +49,7 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 15s
     deploy:
       resources:
         limits:
