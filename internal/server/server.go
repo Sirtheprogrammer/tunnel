@@ -57,6 +57,9 @@ type Config struct {
 	// SessionLogger records tunnel session start and end events. Optional.
 	SessionLogger SessionLogger
 
+	// WebPortal optionally handles HTTP requests to the apex domain (e.g. tl.codesky.tech).
+	WebPortal http.Handler
+
 	// TLSConfig secures the control listener. Nil serves plaintext, which is
 	// only appropriate for tests and local development.
 	TLSConfig *tls.Config
@@ -346,6 +349,10 @@ func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 
 	label, ok := names.LabelFor(r.Host, s.cfg.Domain)
 	if !ok {
+		if s.cfg.WebPortal != nil {
+			s.cfg.WebPortal.ServeHTTP(w, r)
+			return
+		}
 		s.writeErrorPage(w, r, http.StatusNotFound, pageNoSuchHost)
 		return
 	}
@@ -375,7 +382,7 @@ func (s *Server) RedirectHandler() http.Handler {
 			host = h
 		}
 		u := *r.URL
-		
+
 		if s.cfg.PublicURL != "" {
 			if parsed, err := url.Parse(s.cfg.PublicURL); err == nil {
 				u.Scheme = parsed.Scheme
@@ -391,7 +398,7 @@ func (s *Server) RedirectHandler() http.Handler {
 				host = fmt.Sprintf("%s:%d", host, p)
 			}
 		}
-		
+
 		u.Host = host
 		http.Redirect(w, r, u.String(), http.StatusMovedPermanently)
 	})

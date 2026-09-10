@@ -1,0 +1,288 @@
+{{define "title"}}Dashboard &middot; TunnelX{{end}}
+
+{{define "content"}}
+<div class="container">
+
+  <!-- Dashboard User Header -->
+  <div class="dashboard-header">
+    <div class="user-badge">
+      {{if .User.AvatarURL}}
+        <img class="avatar" src="{{.User.AvatarURL}}" alt="avatar">
+      {{else}}
+        <div class="avatar-placeholder">{{printf "%.1s" .User.Email}}</div>
+      {{end}}
+      <div>
+        <div style="font-weight: 600; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem;">
+          {{.User.Email}}
+          {{if .User.GitHubUsername}}
+            <span class="badge" style="background: rgba(255,255,255,0.08); font-size: 0.75rem;">@{{.User.GitHubUsername}}</span>
+          {{end}}
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">Account ID: <code>{{.User.ID}}</code></div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <button class="btn btn-primary btn-sm" onclick="openModal('new-token-modal')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        New Authtoken
+      </button>
+      <button class="btn btn-secondary btn-sm" onclick="openModal('reserve-modal')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Reserve Subdomain
+      </button>
+    </div>
+  </div>
+
+  <!-- If a new token was just created, show one-time banner modal -->
+  {{if .CreatedToken}}
+    <div class="alert alert-success" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+      <div style="font-weight: 600; font-size: 0.95rem;">✓ New Authtoken Generated</div>
+      <p style="font-size: 0.85rem; color: #a7f3d0;">
+        This token is shown <strong>once</strong> and cannot be recovered since only its secure SHA-256 hash is stored.
+      </p>
+      <div class="code-box" style="width: 100%; margin-top: 0.5rem;">
+        <span style="color: #6ee7b7;">tunnelx login {{.CreatedToken}} --server {{.Domain}}:7835</span>
+        <button class="copy-btn" data-clipboard-text="tunnelx login {{.CreatedToken}} --server {{.Domain}}:7835">&boxbox;</button>
+      </div>
+    </div>
+  {{end}}
+
+  <!-- Navigation Tabs -->
+  <div class="tabs-nav">
+    <button class="tab-btn active" data-tab="tab-tokens">Authtokens ({{len .Tokens}})</button>
+    <button class="tab-btn" data-tab="tab-subdomains">Subdomains ({{len .Reservations}})</button>
+    <button class="tab-btn" data-tab="tab-sessions">Tunnel History ({{len .Sessions}})</button>
+    <button class="tab-btn" data-tab="tab-setup">Client Setup</button>
+  </div>
+
+  <!-- TAB 1: Authtokens -->
+  <div id="tab-tokens" class="tab-content active">
+    <div class="data-card">
+      <div class="card-header">
+        <h2>Authtokens</h2>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Tokens allow the <code>tunnelx</code> CLI to connect</span>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Token / Device</th>
+            <th>Prefix</th>
+            <th>Created</th>
+            <th>Last Used</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Tokens}}
+            <tr>
+              <td>
+                <div style="font-weight: 500; color: var(--text-primary);">{{if .Name}}{{.Name}}{{else}}<em>Unnamed Device</em>{{end}}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">ID: {{.ID}}</div>
+              </td>
+              <td><code>{{.Prefix}}****</code></td>
+              <td>{{.CreatedAt.Format "Jan 02, 2006"}}</td>
+              <td>
+                {{if .LastUsedAt}}
+                  {{.LastUsedAt.Format "Jan 02, 15:04"}}
+                {{else}}
+                  <span style="color: var(--text-muted); font-size: 0.8rem;">Never</span>
+                {{end}}
+              </td>
+              <td style="text-align: right;">
+                <form action="/dashboard/tokens/revoke" method="POST" onsubmit="return confirm('Revoke this token immediately?');" style="display:inline;">
+                  <input type="hidden" name="token_id" value="{{.ID}}">
+                  <button type="submit" class="btn btn-danger btn-sm">Revoke</button>
+                </form>
+              </td>
+            </tr>
+          {{else}}
+            <tr>
+              <td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                No authtokens created yet. Click "New Authtoken" above to create one.
+              </td>
+            </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 2: Subdomains -->
+  <div id="tab-subdomains" class="tab-content">
+    <div class="data-card">
+      <div class="card-header">
+        <h2>Reserved Subdomains</h2>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Only your account can connect to these subdomains</span>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Subdomain</th>
+            <th>Public URL</th>
+            <th>Reserved At</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Reservations}}
+            <tr>
+              <td><span style="font-weight: 600; color: var(--text-primary);">{{.Label}}</span></td>
+              <td><a href="https://{{.Label}}.{{$.Domain}}" target="_blank" class="t-url">https://{{.Label}}.{{$.Domain}}</a></td>
+              <td>{{.CreatedAt.Format "Jan 02, 2006"}}</td>
+              <td style="text-align: right;">
+                <form action="/dashboard/subdomains/release" method="POST" onsubmit="return confirm('Release this subdomain reservation?');" style="display:inline;">
+                  <input type="hidden" name="subdomain" value="{{.Label}}">
+                  <button type="submit" class="btn btn-danger btn-sm">Release</button>
+                </form>
+              </td>
+            </tr>
+          {{else}}
+            <tr>
+              <td colspan="4" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                No reserved subdomains yet. Unreserved tunnels receive random names like <code>brave-otter-7f3a</code>.
+              </td>
+            </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 3: Tunnel History -->
+  <div id="tab-sessions" class="tab-content">
+    <div class="data-card">
+      <div class="card-header">
+        <h2>Recent Tunnel Sessions</h2>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">History of connections from your devices</span>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Subdomain</th>
+            <th>Local Target</th>
+            <th>Connected At</th>
+            <th>Ended At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Sessions}}
+            <tr>
+              <td>
+                {{if .EndedAt}}
+                  <span class="badge badge-ended">Closed</span>
+                {{else}}
+                  <span class="badge badge-active"><span class="badge-dot"></span> Active</span>
+                {{end}}
+              </td>
+              <td><span style="font-weight: 600; color: var(--text-primary);">{{.Subdomain}}</span></td>
+              <td><code>{{if .LocalAddr}}{{.LocalAddr}}{{else}}localhost{{end}}</code></td>
+              <td>{{.StartedAt.Format "Jan 02, 15:04:05"}}</td>
+              <td>
+                {{if .EndedAt}}
+                  {{.EndedAt.Format "Jan 02, 15:04:05"}}
+                {{else}}
+                  <span style="color: var(--accent-emerald);">Live now</span>
+                {{end}}
+              </td>
+            </tr>
+          {{else}}
+            <tr>
+              <td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                No tunnel history found. Connect a tunnel using <code>tunnelx http 3000</code>.
+              </td>
+            </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 4: Client Setup Guide -->
+  <div id="tab-setup" class="tab-content">
+    <div class="data-card">
+      <div class="card-header">
+        <h2>Developer Quickstart</h2>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Setup in 30 seconds</span>
+      </div>
+      <div style="padding: 1.5rem;">
+        <div style="margin-bottom: 1.5rem;">
+          <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">1. Install CLI</h3>
+          <div class="code-box">
+            <span>curl -fsSL https://{{.Domain}}/install.sh | bash</span>
+            <button class="copy-btn" data-clipboard-text="curl -fsSL https://{{.Domain}}/install.sh | bash">&boxbox;</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+          <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">2. Authenticate</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.4rem;">
+            Generate an authtoken in the Authtokens tab, then log in:
+          </p>
+          <div class="code-box">
+            <span>tunnelx login &lt;YOUR_TOKEN&gt; --server {{.Domain}}:7835</span>
+            <button class="copy-btn" data-clipboard-text="tunnelx login <YOUR_TOKEN> --server {{.Domain}}:7835">&boxbox;</button>
+          </div>
+        </div>
+
+        <div>
+          <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">3. Start Forwarding</h3>
+          <div class="code-box">
+            <span>tunnelx http 3000</span>
+            <button class="copy-btn" data-clipboard-text="tunnelx http 3000">&boxbox;</button>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+            For Vite/Webpack dev servers, add <code>--host-header rewrite</code>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal: New Token -->
+<div id="new-token-modal" class="modal-backdrop">
+  <div class="modal-box">
+    <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Generate Authtoken</h2>
+    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+      Assign a friendly label to tell your devices apart (e.g. MacBook Pro, Work Desktop).
+    </p>
+    <form action="/dashboard/tokens/create" method="POST">
+      <div class="form-group">
+        <label class="form-label" for="token_name">Device Label</label>
+        <input class="form-input" type="text" id="token_name" name="name" placeholder="e.g. Work MacBook" autofocus>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('new-token-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Generate Token</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Reserve Subdomain -->
+<div id="reserve-modal" class="modal-backdrop">
+  <div class="modal-box">
+    <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Reserve Subdomain</h2>
+    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+      Lock in a permanent subdomain like <code>myapp.{{.Domain}}</code> so only you can tunnel to it.
+    </p>
+    <form action="/dashboard/subdomains/reserve" method="POST">
+      <div class="form-group">
+        <label class="form-label" for="subdomain_label">Subdomain Name</label>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <input class="form-input" type="text" id="subdomain_label" name="subdomain" placeholder="myapp" required pattern="[a-z0-9\-]+" style="text-transform: lowercase;">
+          <span style="color: var(--text-muted); font-size: 0.9rem;">.{{.Domain}}</span>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('reserve-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Reserve</button>
+      </div>
+    </form>
+  </div>
+</div>
+{{end}}
+

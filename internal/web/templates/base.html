@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{block "title" .}}TunnelX — Instant Public HTTPS Tunnels{{end}}</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/></svg>">
+</head>
+<body class="bg-grid">
+
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+        <span>TunnelX</span>
+        <span class="brand-badge">v1.0</span>
+      </a>
+
+      <div class="nav-links">
+        {{if .User}}
+          <a href="/dashboard" class="nav-link">Dashboard</a>
+          <form action="/auth/logout" method="POST" style="display:inline;">
+            <button type="submit" class="btn btn-secondary btn-sm">Log out</button>
+          </form>
+        {{else}}
+          <a href="/login" class="nav-link">Sign In</a>
+          <a href="/register" class="btn btn-primary btn-sm">Get Started</a>
+        {{end}}
+      </div>
+    </div>
+  </nav>
+
+  {{if .FlashError}}
+    <div class="container" style="padding-top:1.5rem; padding-bottom:0;">
+      <div class="alert alert-error">
+        <span>{{.FlashError}}</span>
+      </div>
+    </div>
+  {{end}}
+
+  {{if .FlashSuccess}}
+    <div class="container" style="padding-top:1.5rem; padding-bottom:0;">
+      <div class="alert alert-success">
+        <span>{{.FlashSuccess}}</span>
+      </div>
+    </div>
+  {{end}}
+
+  {{block "content" .}}{{end}}
+
+  <footer>
+    <div class="container" style="padding:0;">
+      <p>TunnelX &middot; Self-Hosted Developer Tunneling Service &middot; Fast, Secure, CGO-Free</p>
+    </div>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
+

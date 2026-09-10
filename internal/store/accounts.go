@@ -13,10 +13,14 @@ import (
 
 // Account is a tunnelx user.
 type Account struct {
-	ID        string
-	Email     string
-	CreatedAt time.Time
-	Disabled  bool
+	ID             string
+	Email          string
+	PasswordHash   string
+	GitHubID       string
+	GitHubUsername string
+	AvatarURL      string
+	CreatedAt      time.Time
+	Disabled       bool
 }
 
 // Token is an issued authtoken. The plaintext is never stored, so it is absent
@@ -50,7 +54,8 @@ func (s *Store) CreateAccount(ctx context.Context, email string) (*Account, erro
 	}
 	a := &Account{ID: newRowID(), Email: email, CreatedAt: time.Now()}
 	_, err := s.db.ExecContext(ctx,
-		`INSERT INTO accounts (id, email, created_at, disabled) VALUES (?, ?, ?, 0)`,
+		`INSERT INTO accounts (id, email, password_hash, github_id, github_username, avatar_url, created_at, disabled)
+		 VALUES (?, ?, '', '', '', '', ?, 0)`,
 		a.ID, a.Email, a.CreatedAt.Unix())
 	if err != nil {
 		if isUniqueViolation(err) {
@@ -65,14 +70,16 @@ func (s *Store) CreateAccount(ctx context.Context, email string) (*Account, erro
 func (s *Store) AccountByEmail(ctx context.Context, email string) (*Account, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 	row := s.db.QueryRowContext(ctx,
-		`SELECT id, email, created_at, disabled FROM accounts WHERE email = ?`, email)
+		`SELECT id, email, password_hash, github_id, github_username, avatar_url, created_at, disabled
+		 FROM accounts WHERE email = ?`, email)
 	return scanAccount(row)
 }
 
 // AccountByID looks up an account.
 func (s *Store) AccountByID(ctx context.Context, id string) (*Account, error) {
 	row := s.db.QueryRowContext(ctx,
-		`SELECT id, email, created_at, disabled FROM accounts WHERE id = ?`, id)
+		`SELECT id, email, password_hash, github_id, github_username, avatar_url, created_at, disabled
+		 FROM accounts WHERE id = ?`, id)
 	return scanAccount(row)
 }
 
@@ -80,7 +87,7 @@ func scanAccount(row *sql.Row) (*Account, error) {
 	var a Account
 	var created int64
 	var disabled int
-	if err := row.Scan(&a.ID, &a.Email, &created, &disabled); err != nil {
+	if err := row.Scan(&a.ID, &a.Email, &a.PasswordHash, &a.GitHubID, &a.GitHubUsername, &a.AvatarURL, &created, &disabled); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
 		}
@@ -94,7 +101,8 @@ func scanAccount(row *sql.Row) (*Account, error) {
 // ListAccounts returns every account, oldest first.
 func (s *Store) ListAccounts(ctx context.Context) ([]*Account, error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, email, created_at, disabled FROM accounts ORDER BY created_at`)
+		`SELECT id, email, password_hash, github_id, github_username, avatar_url, created_at, disabled
+		 FROM accounts ORDER BY created_at`)
 	if err != nil {
 		return nil, fmt.Errorf("list accounts: %w", err)
 	}
@@ -105,7 +113,7 @@ func (s *Store) ListAccounts(ctx context.Context) ([]*Account, error) {
 		var a Account
 		var created int64
 		var disabled int
-		if err := rows.Scan(&a.ID, &a.Email, &created, &disabled); err != nil {
+		if err := rows.Scan(&a.ID, &a.Email, &a.PasswordHash, &a.GitHubID, &a.GitHubUsername, &a.AvatarURL, &created, &disabled); err != nil {
 			return nil, fmt.Errorf("read account: %w", err)
 		}
 		a.CreatedAt = time.Unix(created, 0)

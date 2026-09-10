@@ -1,0 +1,131 @@
+{{define "title"}}TunnelX — Self-Hosted Public HTTPS Tunnels{{end}}
+
+{{define "content"}}
+<div class="container">
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-pill">
+      <span class="pill-pulse"></span>
+      <span>Self-Hosted &middot; Zero Dependencies &middot; Instant HTTPS</span>
+    </div>
+    <h1>Expose your localhost to the world in seconds.</h1>
+    <p>
+      Test Stripe webhooks, preview Vite dev servers, and demo live APIs on real mobile devices with public wildcard HTTPS URLs.
+    </p>
+
+    <div class="hero-actions">
+      {{if .User}}
+        <a href="/dashboard" class="btn btn-primary">Go to Dashboard &rarr;</a>
+      {{else}}
+        <a href="/register" class="btn btn-primary">Get Started Free</a>
+        <a href="/login" class="btn btn-secondary">Sign In</a>
+      {{end}}
+      <button class="btn btn-secondary copy-btn" data-clipboard-text="curl -fsSL https://{{.Domain}}/install.sh | bash">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        Copy Install Script
+      </button>
+    </div>
+  </section>
+
+  <!-- Interactive Terminal Simulation -->
+  <div class="terminal">
+    <div class="terminal-header">
+      <span class="terminal-btn tb-red"></span>
+      <span class="terminal-btn tb-yellow"></span>
+      <span class="terminal-btn tb-green"></span>
+      <span class="terminal-title">bash &mdash; 80x24</span>
+    </div>
+    <div class="terminal-body">
+      <div class="t-line">
+        <span class="t-prompt">$</span> <span class="t-cmd">tunnelx http 3000 --subdomain dev</span>
+      </div>
+      <div class="t-line">
+        <span class="t-muted">tunnelx v1.0.0 ready</span>
+      </div>
+      <div class="t-line">
+        <span class="t-muted">Forwarding:</span> <span class="t-url">https://dev.{{.Domain}}</span> &rarr; <span class="t-info">http://localhost:3000</span>
+      </div>
+      <div class="t-line">
+        <span class="t-muted">Subdomain:</span> <span class="t-cmd">dev</span> <span class="t-success">(reserved)</span>
+      </div>
+      <div class="t-line" style="margin-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 0.5rem;">
+        <span class="t-muted">&bull; Streaming incoming traffic:</span>
+      </div>
+      <div id="terminal-live-logs">
+        <div class="t-line"><span class="t-muted">02:30:12</span> <span class="t-success">200</span> <span class="t-cmd">GET</span> <span class="t-info">/</span> <span class="t-muted">(2.4ms)</span></div>
+        <div class="t-line"><span class="t-muted">02:30:15</span> <span class="t-success">200</span> <span class="t-cmd">GET</span> <span class="t-info">/api/v1/status</span> <span class="t-muted">(1.8ms)</span></div>
+        <div class="t-line"><span class="t-muted">02:30:19</span> <span class="t-success">101</span> <span class="t-cmd">GET</span> <span class="t-info">/ws/updates</span> <span class="t-muted">(WebSocket spliced)</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feature Grid -->
+  <section class="features">
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h3>Automated Wildcard TLS</h3>
+      <p>Automatic Let's Encrypt certificates issued via Cloudflare DNS-01 or static origin certificates. Zero certificate warnings.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+      </div>
+      <h3>WebSocket Splicing</h3>
+      <p>Full HTTP upgrade transparency. Live-reload dev servers, WebSockets, socket.io, and SSE work out-of-the-box.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <h3>Custom Subdomain Leases</h3>
+      <p>Reserve subdomains permanently for your account, plus 60-second disconnect leases so client reconnections never drop URLs.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      </div>
+      <h3>Pure Single Binary</h3>
+      <p>Zero CGO, zero external databases. Built with embedded pure-Go SQLite and Yamux multiplexing for minimal memory usage.</p>
+    </div>
+  </section>
+
+  <!-- Quick Client Downloads -->
+  <div class="data-card" style="margin-top: 3rem;">
+    <div class="card-header">
+      <h2>Install the CLI Client</h2>
+      <span class="badge badge-active"><span class="badge-dot"></span> macOS, Linux, Windows</span>
+    </div>
+    <div style="padding: 1.5rem;">
+      <p style="color: var(--text-secondary); margin-bottom: 1.25rem;">
+        Install the lightweight <code>tunnelx</code> CLI on your development workstation:
+      </p>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+        <div style="background: var(--bg-card); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle);">
+          <div style="font-weight: 600; margin-bottom: 0.5rem;">macOS / Linux (Shell)</div>
+          <div class="code-box">
+            <span>curl -fsSL https://{{.Domain}}/install.sh | bash</span>
+            <button class="copy-btn" data-clipboard-text="curl -fsSL https://{{.Domain}}/install.sh | bash">&boxbox;</button>
+          </div>
+        </div>
+
+        <div style="background: var(--bg-card); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border-subtle);">
+          <div style="font-weight: 600; margin-bottom: 0.5rem;">Windows (PowerShell)</div>
+          <div class="code-box">
+            <span>irm https://{{.Domain}}/install.ps1 | iex</span>
+            <button class="copy-btn" data-clipboard-text="irm https://{{.Domain}}/install.ps1 | iex">&boxbox;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{{end}}
+

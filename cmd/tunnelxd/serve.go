@@ -16,6 +16,7 @@ import (
 
 	"tunnel/internal/server"
 	"tunnel/internal/store"
+	"tunnel/internal/web"
 )
 
 // defaultCFTokenEnv names the environment variable holding the Cloudflare API
@@ -43,6 +44,9 @@ func serveCmd() *cobra.Command {
 		verbose        bool
 		dbPath         string
 		allowAnonymous bool
+		enablePortal   bool
+		ghClientID     string
+		ghClientSecret string
 	)
 
 	cmd := &cobra.Command{
@@ -144,6 +148,21 @@ func serveCmd() *cobra.Command {
 				auth.AnonymousAccountID = "anonymous"
 			}
 
+			var webPortal http.Handler
+			if enablePortal {
+				wp, err := web.New(web.Config{
+					Domain:             domain,
+					Store:              db,
+					GitHubClientID:     ghClientID,
+					GitHubClientSecret: ghClientSecret,
+					Logger:             log,
+				})
+				if err != nil {
+					return fmt.Errorf("init web portal: %w", err)
+				}
+				webPortal = wp
+			}
+
 			srv, err := server.New(server.Config{
 				Domain:               domain,
 				ControlAddr:          controlAddr,
@@ -154,6 +173,7 @@ func serveCmd() *cobra.Command {
 				PublicPort:           publicPort,
 				Auth:                 auth,
 				SessionLogger:        db,
+				WebPortal:            webPortal,
 				TLSConfig:            tlsCfg,
 				Logger:               log,
 			})
@@ -226,6 +246,9 @@ func serveCmd() *cobra.Command {
 	f.StringVar(&dbPath, "db", defaultDBPath, "path to the control-plane database")
 	f.BoolVar(&allowAnonymous, "allow-anonymous", false,
 		"accept agents without an authtoken, sharing one account (development only)")
+	f.BoolVar(&enablePortal, "enable-portal", true, "serve web landing page and auth dashboard on apex domain")
+	f.StringVar(&ghClientID, "github-client-id", os.Getenv("GITHUB_CLIENT_ID"), "GitHub OAuth Client ID")
+	f.StringVar(&ghClientSecret, "github-client-secret", os.Getenv("GITHUB_CLIENT_SECRET"), "GitHub OAuth Client Secret")
 	return cmd
 }
 

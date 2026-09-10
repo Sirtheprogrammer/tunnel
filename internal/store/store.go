@@ -62,10 +62,14 @@ func (s *Store) DB() *sql.DB { return s.db }
 // them on every boot without a separate migration tool.
 var schema = []string{
 	`CREATE TABLE IF NOT EXISTS accounts (
-		id         TEXT PRIMARY KEY,
-		email      TEXT NOT NULL UNIQUE COLLATE NOCASE,
-		created_at INTEGER NOT NULL,
-		disabled   INTEGER NOT NULL DEFAULT 0
+		id              TEXT PRIMARY KEY,
+		email           TEXT NOT NULL UNIQUE COLLATE NOCASE,
+		password_hash   TEXT NOT NULL DEFAULT '',
+		github_id       TEXT NOT NULL DEFAULT '',
+		github_username TEXT NOT NULL DEFAULT '',
+		avatar_url      TEXT NOT NULL DEFAULT '',
+		created_at      INTEGER NOT NULL,
+		disabled        INTEGER NOT NULL DEFAULT 0
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS tokens (
@@ -98,25 +102,14 @@ var schema = []string{
 	)`,
 	`CREATE INDEX IF NOT EXISTS idx_sessions_account ON tunnel_sessions(account_id, started_at)`,
 
-	`CREATE TABLE IF NOT EXISTS accounts_nocase (
+	`CREATE TABLE IF NOT EXISTS web_sessions (
 		id         TEXT PRIMARY KEY,
-		email      TEXT NOT NULL UNIQUE COLLATE NOCASE,
-		created_at INTEGER NOT NULL,
-		disabled   INTEGER NOT NULL DEFAULT 0
-	)`,
-	`INSERT OR IGNORE INTO accounts_nocase SELECT * FROM accounts`,
-	`DROP TABLE accounts`,
-	`ALTER TABLE accounts_nocase RENAME TO accounts`,
-
-	`CREATE TABLE IF NOT EXISTS reserved_subdomains_nocase (
-		label      TEXT PRIMARY KEY COLLATE NOCASE,
 		account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-		created_at INTEGER NOT NULL
+		created_at INTEGER NOT NULL,
+		expires_at INTEGER NOT NULL
 	)`,
-	`INSERT OR IGNORE INTO reserved_subdomains_nocase SELECT * FROM reserved_subdomains`,
-	`DROP TABLE reserved_subdomains`,
-	`ALTER TABLE reserved_subdomains_nocase RENAME TO reserved_subdomains`,
-	`CREATE INDEX IF NOT EXISTS idx_reserved_account ON reserved_subdomains(account_id)`,
+	`CREATE INDEX IF NOT EXISTS idx_web_sessions_account ON web_sessions(account_id)`,
+	`CREATE INDEX IF NOT EXISTS idx_web_sessions_expiry ON web_sessions(expires_at)`,
 }
 
 func (s *Store) migrate(ctx context.Context) error {
@@ -125,6 +118,18 @@ func (s *Store) migrate(ctx context.Context) error {
 			return fmt.Errorf("apply schema statement %d: %w", i, err)
 		}
 	}
+
+	// Idempotently ensure new columns exist on older existing databases
+	columns := []struct{ col, def string }{
+		{"password_hash", "TEXT NOT NULL DEFAULT ''"},
+		{"github_id", "TEXT NOT NULL DEFAULT ''"},
+		{"github_username", "TEXT NOT NULL DEFAULT ''"},
+		{"avatar_url", "TEXT NOT NULL DEFAULT ''"},
+	}
+	for _, c := range columns {
+		_, _ = s.db.ExecContext(ctx, fmt.Sprintf("ALTER TABLE accounts ADD COLUMN %s %s", c.col, c.def))
+	}
+
 	return nil
 }
 
