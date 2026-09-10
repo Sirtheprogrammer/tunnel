@@ -23,6 +23,7 @@ func httpCmd() *cobra.Command {
 		insecure   bool
 		noTLS      bool
 		verbose    bool
+		caCert     string
 	)
 
 	cmd := &cobra.Command{
@@ -51,6 +52,9 @@ func httpCmd() *cobra.Command {
 			if token == "" {
 				token = cfg.Token
 			}
+			if caCert == "" {
+				caCert = cfg.CACert
+			}
 
 			mode, value, err := parseHostHeader(hostHeader)
 			if err != nil {
@@ -72,6 +76,7 @@ func httpCmd() *cobra.Command {
 				HostHeaderValue: value,
 				Insecure:        insecure || cfg.Insecure,
 				TLSDisabled:     noTLS,
+				CACert:          caCert,
 				Observer:        newConsole(cmd.OutOrStdout(), local),
 				Logger:          logger,
 			})
@@ -91,6 +96,7 @@ func httpCmd() *cobra.Command {
 	f.BoolVar(&insecure, "insecure", false, "skip TLS certificate verification (development only)")
 	f.BoolVar(&noTLS, "no-tls", false, "connect to the server without TLS (development only)")
 	f.BoolVarP(&verbose, "verbose", "v", false, "log protocol detail to stderr")
+	f.StringVar(&caCert, "ca-cert", "", "path to a custom CA certificate PEM file")
 	return cmd
 }
 

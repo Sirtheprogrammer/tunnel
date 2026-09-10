@@ -9,7 +9,9 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -45,8 +47,15 @@ type Config struct {
 	PublicScheme string
 	PublicPort   int
 
+	// PublicURL is an optional base URL (e.g. https://tunnel.example.com) that
+	// overrides the scheme and port.
+	PublicURL string
+
 	// Auth validates agent tokens. Required.
 	Auth Authenticator
+
+	// SessionLogger records tunnel session start and end events. Optional.
+	SessionLogger SessionLogger
 
 	// TLSConfig secures the control listener. Nil serves plaintext, which is
 	// only appropriate for tests and local development.
@@ -66,6 +75,12 @@ type Authenticator interface {
 	// AllowSubdomain reports whether accountID may claim label. It is only
 	// consulted for user-chosen labels, never for generated ones.
 	AllowSubdomain(ctx context.Context, accountID, label string) error
+}
+
+// SessionLogger records the lifecycle of tunnel sessions.
+type SessionLogger interface {
+	StartSession(ctx context.Context, accountID, subdomain, localAddr, clientIP string) (string, error)
+	EndSession(ctx context.Context, sessionID string) error
 }
 
 func (c *Config) setDefaults() {
@@ -126,6 +141,13 @@ func (s *Server) Registry() *Registry { return s.registry }
 
 // publicURL builds the advertised URL for a label.
 func (s *Server) publicURL(label string) string {
+	if s.cfg.PublicURL != "" {
+		base := strings.TrimRight(s.cfg.PublicURL, "/")
+		if u, err := url.Parse(base); err == nil {
+			u.Host = label + "." + u.Host
+			return u.String()
+		}
+	}
 	host := label + "." + s.cfg.Domain
 	if p := s.cfg.PublicPort; p != 0 && !isDefaultPort(s.cfg.PublicScheme, p) {
 		host = fmt.Sprintf("%s:%d", host, p)
@@ -139,12 +161,12 @@ func isDefaultPort(scheme string, port int) bool {
 
 // validateSubdomain checks a user-chosen label for syntax, reservation, and
 // account entitlement.
-func (s *Server) validateSubdomain(label, accountID string) (string, error) {
+func (s *Server) validateSubdomain(ctx context.Context, label, accountID string) (string, error) {
 	label, err := names.Validate(label)
 	if err != nil {
 		return "", err
 	}
-	if err := s.cfg.Auth.AllowSubdomain(context.Background(), accountID, label); err != nil {
+	if err := s.cfg.Auth.AllowSubdomain(ctx, accountID, label); err != nil {
 		return "", err
 	}
 	return label, nil
@@ -316,6 +338,12 @@ func (s *Server) Handler() http.Handler {
 }
 
 func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/healthz" {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok\n"))
+		return
+	}
+
 	label, ok := names.LabelFor(r.Host, s.cfg.Domain)
 	if !ok {
 		s.writeErrorPage(w, r, http.StatusNotFound, pageNoSuchHost)
@@ -347,7 +375,23 @@ func (s *Server) RedirectHandler() http.Handler {
 			host = h
 		}
 		u := *r.URL
-		u.Scheme = "https"
+		
+		if s.cfg.PublicURL != "" {
+			if parsed, err := url.Parse(s.cfg.PublicURL); err == nil {
+				u.Scheme = parsed.Scheme
+				if parsed.Port() != "" {
+					host = net.JoinHostPort(host, parsed.Port())
+				}
+			} else {
+				u.Scheme = "https"
+			}
+		} else {
+			u.Scheme = "https"
+			if p := s.cfg.PublicPort; p != 0 && !isDefaultPort("https", p) {
+				host = fmt.Sprintf("%s:%d", host, p)
+			}
+		}
+		
 		u.Host = host
 		http.Redirect(w, r, u.String(), http.StatusMovedPermanently)
 	})

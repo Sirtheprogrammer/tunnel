@@ -21,7 +21,7 @@
 #       --db /var/lib/tunnelx/tunnelx.db --acme-cache-dir /var/lib/tunnelx/acme-cache \
 #       --http-addr :8080 --https-addr :8443
 
-FROM golang:1.26-bookworm AS build
+FROM golang:1.23-bookworm AS build
 WORKDIR /src
 
 # Cached separately from source: dependencies change far less often than code,
@@ -35,6 +35,7 @@ ARG VERSION=dev
 ENV CGO_ENABLED=0
 RUN go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/tunnelxd ./cmd/tunnelxd
 RUN go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/tunnelx  ./cmd/tunnelx
+RUN mkdir -p /tmp/tunnelx-data
 
 # distroless/static-debian12 carries a CA bundle (needed for the ACME and
 # Cloudflare API HTTPS calls) and a built-in "nonroot" user, with no shell and
@@ -42,6 +43,7 @@ RUN go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/tunne
 FROM gcr.io/distroless/static-debian12:nonroot AS runtime
 COPY --from=build /out/tunnelxd /usr/local/bin/tunnelxd
 COPY --from=build /out/tunnelx  /usr/local/bin/tunnelx
+COPY --from=build --chown=nonroot:nonroot /tmp/tunnelx-data /var/lib/tunnelx
 
 # Holds the SQLite control-plane database and the ACME certificate cache.
 # Mount a named volume or bind mount here so both survive a container restart.
@@ -57,10 +59,4 @@ ENTRYPOINT ["/usr/local/bin/tunnelxd"]
 # A runnable default so `docker run tunnelxd:latest` shows something sensible;
 # --acme-email and CF_API_TOKEN are per-deployment, so real usage overrides
 # this CMD (see the run example above).
-CMD ["serve", \
-     "--domain", "tl.codesky.tech", \
-     "--db", "/var/lib/tunnelx/tunnelx.db", \
-     "--tls-mode", "acme", \
-     "--acme-cache-dir", "/var/lib/tunnelx/acme-cache", \
-     "--http-addr", ":8080", \
-     "--https-addr", ":8443"]
+CMD ["serve", "--help"]

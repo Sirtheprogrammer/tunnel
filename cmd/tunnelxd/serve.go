@@ -29,6 +29,7 @@ func serveCmd() *cobra.Command {
 		controlAddr    string
 		httpAddr       string
 		httpsAddr      string
+		publicURL      string
 		tlsMode        string
 		certFile       string
 		keyFile        string
@@ -148,9 +149,11 @@ func serveCmd() *cobra.Command {
 				ControlAddr:          controlAddr,
 				MaxTunnelsPerAccount: maxTunnels,
 				DisconnectLease:      leaseTTL,
+				PublicURL:            publicURL,
 				PublicScheme:         scheme,
 				PublicPort:           publicPort,
 				Auth:                 auth,
+				SessionLogger:        db,
 				TLSConfig:            tlsCfg,
 				Logger:               log,
 			})
@@ -204,6 +207,7 @@ func serveCmd() *cobra.Command {
 	f.StringVar(&controlAddr, "control-addr", ":7835", "listen address for agent connections")
 	f.StringVar(&httpsAddr, "https-addr", ":443", "listen address for public tunnel traffic")
 	f.StringVar(&httpAddr, "http-addr", ":80", "listen address for the HTTP redirect (empty to disable)")
+	f.StringVar(&publicURL, "public-url", "", "base URL for public tunnels (overrides scheme/port derived from listen address)")
 	f.StringVar(&tlsMode, "tls-mode", "file", "certificate source: file (static cert/key) or acme (auto via Let's Encrypt DNS-01)")
 	f.StringVar(&certFile, "tls-cert", "", "wildcard certificate for *.<domain> (--tls-mode file)")
 	f.StringVar(&keyFile, "tls-key", "", "private key for --tls-cert (--tls-mode file)")

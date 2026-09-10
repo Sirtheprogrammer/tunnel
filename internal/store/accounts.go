@@ -45,6 +45,9 @@ func (s *Store) CreateAccount(ctx context.Context, email string) (*Account, erro
 	if email == "" {
 		return nil, errors.New("email is required")
 	}
+	if strings.Count(email, "@") != 1 || strings.LastIndex(email, ".") < strings.LastIndex(email, "@") {
+		return nil, fmt.Errorf("invalid email address: %q", email)
+	}
 	a := &Account{ID: newRowID(), Email: email, CreatedAt: time.Now()}
 	_, err := s.db.ExecContext(ctx,
 		`INSERT INTO accounts (id, email, created_at, disabled) VALUES (?, ?, ?, 0)`,
@@ -193,7 +196,8 @@ func (s *Store) AuthenticateToken(ctx context.Context, token string) (*Account, 
 
 	// Best effort: a failed timestamp update must not deny a valid connection.
 	if _, err := s.db.ExecContext(ctx,
-		`UPDATE tokens SET last_used_at = ? WHERE id = ?`, now(), tokenID); err != nil {
+		`UPDATE tokens SET last_used_at = ? WHERE id = ? AND (last_used_at IS NULL OR last_used_at < ?)`,
+		now(), tokenID, time.Now().Add(-time.Minute).Unix()); err != nil {
 		_ = err
 	}
 

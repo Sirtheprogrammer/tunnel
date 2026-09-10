@@ -1,0 +1,43 @@
+services:
+  tunnelxd:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: tunnelxd:latest
+    restart: unless-stopped
+    ports:
+      - "80:8080"
+      - "443:8443" 
+      - "7835:7835"
+    environment:
+      - CF_API_TOKEN=${CF_API_TOKEN}
+    volumes:
+      - tunnelx-data:/var/lib/tunnelx
+    command:
+      - serve
+      - --domain=${TUNNEL_DOMAIN:-tunnel.example.com}
+      - --public-url=https://${TUNNEL_DOMAIN:-tunnel.example.com}
+      - --db=/var/lib/tunnelx/tunnelx.db
+      - --tls-mode=${TLS_MODE:-acme}
+      - --acme-email=${ACME_EMAIL}
+      - --acme-cache-dir=/var/lib/tunnelx/acme-cache
+      - --http-addr=:8080
+      - --https-addr=:8443
+    healthcheck:
+      test: ["CMD-SHELL", "cat /proc/1/status || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  tunnelx-data:

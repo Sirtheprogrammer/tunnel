@@ -44,7 +44,7 @@ func rootCmd() *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
-	root.AddCommand(httpCmd(), loginCmd(), configCmd(), versionCmd())
+	root.AddCommand(httpCmd(), loginCmd(), logoutCmd(), configCmd(), versionCmd())
 	return root
 }
 

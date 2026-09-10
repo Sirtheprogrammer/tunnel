@@ -75,6 +75,9 @@ func (s *Session) close(cause error) {
 
 		for _, t := range tunnels {
 			s.srv.registry.Unregister(t)
+			if t.SessionRowID != "" && s.srv.cfg.SessionLogger != nil {
+				_ = s.srv.cfg.SessionLogger.EndSession(context.Background(), t.SessionRowID)
+			}
 		}
 		s.mux.Close()
 		s.conn.Close()
@@ -129,7 +132,7 @@ func (s *Session) serve(ctx context.Context) {
 			s.close(err)
 			return
 		}
-		if err := s.handle(env); err != nil {
+		if err := s.handle(ctx, env); err != nil {
 			s.log.Warn("control message failed", "type", env.Type, "error", err)
 			s.close(err)
 			return
@@ -139,12 +142,12 @@ func (s *Session) serve(ctx context.Context) {
 
 // handle dispatches one control message. A returned error is fatal to the
 // session; per-request failures are reported over the wire instead.
-func (s *Session) handle(env *proto.Envelope) error {
+func (s *Session) handle(ctx context.Context, env *proto.Envelope) error {
 	switch env.Type {
 	case proto.TypeTunnelCreate:
-		return s.handleTunnelCreate(env)
+		return s.handleTunnelCreate(ctx, env)
 	case proto.TypeTunnelClose:
-		return s.handleTunnelClose(env)
+		return s.handleTunnelClose(ctx, env)
 	case proto.TypePing:
 		return s.writeEnvelope(proto.TypePong, env.ID, nil)
 	case proto.TypePong:
@@ -157,7 +160,7 @@ func (s *Session) handle(env *proto.Envelope) error {
 	}
 }
 
-func (s *Session) handleTunnelCreate(env *proto.Envelope) error {
+func (s *Session) handleTunnelCreate(ctx context.Context, env *proto.Envelope) error {
 	var req proto.TunnelCreate
 	if err := env.Decode(&req); err != nil {
 		return err
@@ -190,7 +193,7 @@ func (s *Session) handleTunnelCreate(env *proto.Envelope) error {
 			return s.writeError(env.ID, proto.CodeInternal, "could not allocate a subdomain")
 		}
 	} else {
-		label, err := s.srv.validateSubdomain(req.Subdomain, s.accountID)
+		label, err := s.srv.validateSubdomain(ctx, req.Subdomain, s.accountID)
 		if err != nil {
 			return s.writeError(env.ID, proto.CodeSubdomainInvalid, err.Error())
 		}
@@ -211,6 +214,13 @@ func (s *Session) handleTunnelCreate(env *proto.Envelope) error {
 	s.tunnels[t.ID] = t
 	s.mu.Unlock()
 
+	if s.srv.cfg.SessionLogger != nil {
+		clientIP, _, _ := net.SplitHostPort(s.conn.RemoteAddr().String())
+		if sessionRowID, err := s.srv.cfg.SessionLogger.StartSession(ctx, s.accountID, t.Label, t.LocalAddr, clientIP); err == nil {
+			t.SessionRowID = sessionRowID
+		}
+	}
+
 	s.log.Info("tunnel opened", "label", t.Label, "url", t.URL, "local", t.LocalAddr)
 	return s.writeEnvelope(proto.TypeTunnelCreated, env.ID, &proto.TunnelCreated{
 		ID:        t.ID,
@@ -219,7 +229,7 @@ func (s *Session) handleTunnelCreate(env *proto.Envelope) error {
 	})
 }
 
-func (s *Session) handleTunnelClose(env *proto.Envelope) error {
+func (s *Session) handleTunnelClose(ctx context.Context, env *proto.Envelope) error {
 	var req proto.TunnelClose
 	if err := env.Decode(&req); err != nil {
 		return err
@@ -234,6 +244,9 @@ func (s *Session) handleTunnelClose(env *proto.Envelope) error {
 		return nil // already gone; closing twice is not an error
 	}
 	s.srv.registry.Unregister(t)
+	if t.SessionRowID != "" && s.srv.cfg.SessionLogger != nil {
+		_ = s.srv.cfg.SessionLogger.EndSession(ctx, t.SessionRowID)
+	}
 	s.log.Info("tunnel closed", "label", t.Label)
 	return nil
 }

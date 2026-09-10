@@ -44,6 +44,27 @@ func loginCmd() *cobra.Command {
 	return cmd
 }
 
+func logoutCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "logout",
+		Short: "Remove the saved authtoken",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			cfg, err := config.Load()
+			if err != nil {
+				return err
+			}
+			cfg.Token = ""
+			if err := cfg.Save(); err != nil {
+				return err
+			}
+			fmt.Fprintln(cmd.OutOrStdout(), "Logged out. Token removed from configuration.")
+			return nil
+		},
+	}
+	return cmd
+}
+
 func configCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",

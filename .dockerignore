@@ -1,0 +1,10 @@
+.git
+*.md
+!go.mod
+!go.sum
+deploy/docker-compose.yml
+.vscode
+.idea
+*.exe
+*.test
+*.out

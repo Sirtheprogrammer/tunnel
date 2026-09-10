@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -260,19 +261,50 @@ func reserveCmd() *cobra.Command {
 		Short: "Release a reserved subdomain",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			subdomain := strings.ToLower(args[0])
 			return withStore(cmd.Context(), dbPath, func(ctx context.Context, s *store.Store) error {
-				if err := s.ReleaseSubdomain(ctx, args[0]); err != nil {
+				if err := s.ReleaseSubdomain(ctx, subdomain); err != nil {
 					if errors.Is(err, store.ErrNotFound) {
-						return fmt.Errorf("%q is not reserved", args[0])
+						return fmt.Errorf("%q is not reserved", subdomain)
 					}
 					return err
 				}
-				fmt.Fprintf(cmd.OutOrStdout(), "Released %s\n", args[0])
+				fmt.Fprintf(cmd.OutOrStdout(), "Released %s\n", subdomain)
 				return nil
 			})
 		},
 	}
 	cmd.AddCommand(release)
+
+	list := &cobra.Command{
+		Use:   "list <email>",
+		Short: "List an account's reserved subdomains",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return withStore(cmd.Context(), dbPath, func(ctx context.Context, s *store.Store) error {
+				acct, err := s.AccountByEmail(ctx, args[0])
+				if err != nil {
+					return accountLookupError(args[0], err)
+				}
+				reservations, err := s.ListReservations(ctx, acct.ID)
+				if err != nil {
+					return err
+				}
+				if len(reservations) == 0 {
+					fmt.Fprintf(cmd.OutOrStdout(), "%s has no reserved subdomains\n", acct.Email)
+					return nil
+				}
+				w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 3, ' ', 0)
+				fmt.Fprintln(w, "SUBDOMAIN\tCREATED")
+				for _, r := range reservations {
+					fmt.Fprintf(w, "%s\t%s\n", r.Label, r.CreatedAt.Format(time.DateOnly))
+				}
+				return w.Flush()
+			})
+		},
+	}
+	cmd.AddCommand(list)
+
 	return cmd
 }
 

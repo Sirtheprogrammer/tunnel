@@ -26,6 +26,8 @@ type Client struct {
 	// Insecure skips certificate verification. Development only.
 	Insecure bool `yaml:"insecure,omitempty"`
 
+	CACert string `yaml:"ca_cert,omitempty"`
+
 	// InspectAddr is the default listen address for the web inspector.
 	InspectAddr string `yaml:"inspect_addr,omitempty"`
 }

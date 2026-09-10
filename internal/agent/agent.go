@@ -6,6 +6,7 @@ package agent
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -56,6 +57,8 @@ type Config struct {
 
 	// Insecure skips server certificate verification. Development only.
 	Insecure bool
+
+	CACert string
 
 	// TLSDisabled connects in plaintext. Local development and tests only.
 	TLSDisabled bool
@@ -231,6 +234,7 @@ func (a *Agent) runOnce(ctx context.Context, first bool) (connected bool, err er
 		log:   a.log,
 		pend:  make(map[string]chan *proto.Envelope),
 	}
+	defer sess.Close()
 
 	if err := sess.authenticate(ctx, a.cfg.Token); err != nil {
 		return false, err
@@ -260,6 +264,18 @@ func (a *Agent) dial(ctx context.Context) (net.Conn, error) {
 			InsecureSkipVerify: a.cfg.Insecure,
 			MinVersion:         tls.VersionTLS12,
 		},
+	}
+	
+	if a.cfg.CACert != "" {
+		b, err := os.ReadFile(a.cfg.CACert)
+		if err == nil {
+			pool, _ := x509.SystemCertPool()
+			if pool == nil {
+				pool = x509.NewCertPool()
+			}
+			pool.AppendCertsFromPEM(b)
+			td.Config.RootCAs = pool
+		}
 	}
 	conn, err := td.DialContext(ctx, "tcp", a.cfg.ServerAddr)
 	if err != nil {

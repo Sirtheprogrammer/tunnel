@@ -28,6 +28,7 @@ type Tunnel struct {
 	Proto     proto.Proto
 	URL       string
 	CreatedAt time.Time
+	SessionRowID string
 
 	// sess is the agent session that serves this tunnel. Data streams are
 	// opened on it.
@@ -147,6 +148,13 @@ func (r *Registry) CountFor(accountID string) int {
 		}
 	}
 	return n
+}
+
+// Count returns the number of live tunnels.
+func (r *Registry) Count() int {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return len(r.tunnels)
 }
 
 // Len returns the number of live tunnels.

@@ -63,7 +63,7 @@ func (s *Store) DB() *sql.DB { return s.db }
 var schema = []string{
 	`CREATE TABLE IF NOT EXISTS accounts (
 		id         TEXT PRIMARY KEY,
-		email      TEXT NOT NULL UNIQUE,
+		email      TEXT NOT NULL UNIQUE COLLATE NOCASE,
 		created_at INTEGER NOT NULL,
 		disabled   INTEGER NOT NULL DEFAULT 0
 	)`,
@@ -81,7 +81,7 @@ var schema = []string{
 	`CREATE INDEX IF NOT EXISTS idx_tokens_account ON tokens(account_id)`,
 
 	`CREATE TABLE IF NOT EXISTS reserved_subdomains (
-		label      TEXT PRIMARY KEY,
+		label      TEXT PRIMARY KEY COLLATE NOCASE,
 		account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
 		created_at INTEGER NOT NULL
 	)`,
@@ -97,6 +97,26 @@ var schema = []string{
 		ended_at   INTEGER
 	)`,
 	`CREATE INDEX IF NOT EXISTS idx_sessions_account ON tunnel_sessions(account_id, started_at)`,
+
+	`CREATE TABLE IF NOT EXISTS accounts_nocase (
+		id         TEXT PRIMARY KEY,
+		email      TEXT NOT NULL UNIQUE COLLATE NOCASE,
+		created_at INTEGER NOT NULL,
+		disabled   INTEGER NOT NULL DEFAULT 0
+	)`,
+	`INSERT OR IGNORE INTO accounts_nocase SELECT * FROM accounts`,
+	`DROP TABLE accounts`,
+	`ALTER TABLE accounts_nocase RENAME TO accounts`,
+
+	`CREATE TABLE IF NOT EXISTS reserved_subdomains_nocase (
+		label      TEXT PRIMARY KEY COLLATE NOCASE,
+		account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+		created_at INTEGER NOT NULL
+	)`,
+	`INSERT OR IGNORE INTO reserved_subdomains_nocase SELECT * FROM reserved_subdomains`,
+	`DROP TABLE reserved_subdomains`,
+	`ALTER TABLE reserved_subdomains_nocase RENAME TO reserved_subdomains`,
+	`CREATE INDEX IF NOT EXISTS idx_reserved_account ON reserved_subdomains(account_id)`,
 }
 
 func (s *Store) migrate(ctx context.Context) error {

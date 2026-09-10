@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"tunnel/internal/proto"
@@ -125,6 +126,18 @@ func (s *session) forward(stream net.Conn, br *bufio.Reader, hdr *proto.StreamHe
 	ex.Status = resp.StatusCode
 	ex.RespHeader = resp.Header.Clone()
 	ex.Duration = time.Since(start)
+
+	select {
+	case werr := <-writeDone:
+		if werr != nil {
+			s.log.Warn("write request to local service failed", "error", werr)
+			if ex.Err == "" {
+				ex.Err = werr.Error()
+			}
+		}
+	default:
+	}
+
 	s.emit(ex) // headers known; body may still be streaming
 
 	if resp.StatusCode == http.StatusSwitchingProtocols {
@@ -185,6 +198,7 @@ func (s *session) emit(ex *Exchange) {
 // it, so the inspector can show a body without buffering an arbitrarily large
 // upload or holding up the proxy.
 type capture struct {
+	sync.Mutex
 	r     io.Reader
 	buf   []byte
 	total int64
@@ -195,6 +209,8 @@ func newCapture(r io.Reader) *capture {
 }
 
 func (c *capture) Read(p []byte) (int, error) {
+	c.Lock()
+	defer c.Unlock()
 	n, err := c.r.Read(p)
 	if n > 0 {
 		c.total += int64(n)
@@ -207,5 +223,7 @@ func (c *capture) Read(p []byte) (int, error) {
 
 // result returns the captured prefix, the true size, and whether it was cut off.
 func (c *capture) result() ([]byte, int64, bool) {
+	c.Lock()
+	defer c.Unlock()
 	return c.buf, c.total, c.total > int64(len(c.buf))
 }

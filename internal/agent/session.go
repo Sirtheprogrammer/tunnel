@@ -199,7 +199,11 @@ func (s *session) readControl() error {
 			ch, ok := s.pend[env.ID]
 			s.pendMu.Unlock()
 			if ok {
-				ch <- env
+				select {
+				case ch <- env:
+				default:
+					s.log.Warn("dropping duplicate control response", "id", env.ID)
+				}
 				continue
 			}
 		}
@@ -254,4 +258,11 @@ func isBenignClose(err error) bool {
 		errors.Is(err, yamux.ErrStreamClosed) ||
 		errors.Is(err, yamux.ErrSessionShutdown) ||
 		errors.Is(err, net.ErrClosed)
+}
+
+// Close gracefully closes the session by sending a tunnel.close message.
+func (s *session) Close() {
+	if s.tunnelID != "" {
+		s.write(proto.TypeTunnelClose, newID(), nil)
+	}
 }
