@@ -65,7 +65,7 @@
 ### Build Requirements (if building from source)
 | Requirement | Version |
 |-------------|---------|
-| Go | 1.23 or later |
+| Go | 1.26 or later |
 | Git | Any recent version |
 
 ### Client Requirements

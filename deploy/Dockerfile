@@ -21,7 +21,7 @@
 #       --db /var/lib/tunnelx/tunnelx.db --acme-cache-dir /var/lib/tunnelx/acme-cache \
 #       --http-addr :8080 --https-addr :8443
 
-FROM golang:1.23-bookworm AS build
+FROM golang:1.26-bookworm AS build
 WORKDIR /src
 
 # Cached separately from source: dependencies change far less often than code,
