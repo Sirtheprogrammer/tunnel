@@ -23,6 +23,9 @@ const defaultDBPath = "tunnelx.db"
 
 // withStore opens the database, runs fn, and closes it.
 func withStore(ctx context.Context, path string, fn func(context.Context, *store.Store) error) error {
+	if err := ensureDBDir(path); err != nil {
+		return fmt.Errorf("create database directory: %w", err)
+	}
 	s, err := store.Open(ctx, path)
 	if err != nil {
 		return err

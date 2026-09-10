@@ -1,0 +1,67 @@
+# systemd unit for tunnelxd, running the real binary directly on a Linux host
+# (the alternative to deploy/Dockerfile).
+#
+# One-time setup:
+#   sudo useradd --system --home-dir /var/lib/tunnelx --shell /usr/sbin/nologin tunnelxd
+#   sudo install -d -o tunnelxd -g tunnelxd -m 0750 /var/lib/tunnelx
+#   sudo install -d -o root     -g tunnelxd -m 0750 /etc/tunnelx
+#   sudo install -m 0755 tunnelxd-linux-amd64 /usr/local/bin/tunnelxd
+#
+#   Create /etc/tunnelx/tunnelxd.env (root:tunnelxd, mode 0640 -- it holds a
+#   live credential):
+#     CF_API_TOKEN=<cloudflare token scoped to Zone:DNS:Edit on your zone>
+#
+#   Edit --domain and --acme-email below for your deployment, then:
+#     sudo cp deploy/tunnelxd.service /etc/systemd/system/
+#     sudo systemctl daemon-reload
+#     sudo systemctl enable --now tunnelxd
+#     sudo journalctl -u tunnelxd -f
+#
+# See the project plan's "DNS setup" section for the DNS records this needs
+# pointed at the host before the ACME DNS-01 challenge can succeed.
+
+[Unit]
+Description=tunnelxd - TunnelX tunnel server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tunnelxd
+Group=tunnelxd
+WorkingDirectory=/var/lib/tunnelx
+EnvironmentFile=/etc/tunnelx/tunnelxd.env
+
+ExecStart=/usr/local/bin/tunnelxd serve \
+    --domain tl.codesky.tech \
+    --db /var/lib/tunnelx/tunnelx.db \
+    --tls-mode acme \
+    --acme-email you@codesky.tech \
+    --acme-cache-dir /var/lib/tunnelx/acme-cache
+
+Restart=on-failure
+RestartSec=2s
+
+# Binds :80/:443 without running as root.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+# Hardening: read-only filesystem except the one directory the service
+# actually writes to (the SQLite database and the ACME cert cache).
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/tunnelx
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=multi-user.target
