@@ -32,6 +32,8 @@ services:
       - "7835:7835"
     environment:
       - CF_API_TOKEN=${CF_API_TOKEN}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
     volumes:
       - tunnelx-data:/var/lib/tunnelx
     command:

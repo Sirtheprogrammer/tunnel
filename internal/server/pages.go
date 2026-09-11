@@ -49,17 +49,36 @@ var errorPageTmpl = template.Must(template.New("error").Parse(`<!doctype html>
   :root { color-scheme: light dark; }
   body { margin:0; min-height:100vh; display:grid; place-items:center;
          font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
-         background:#fafafa; color:#18181b; }
-  @media (prefers-color-scheme: dark) { body { background:#09090b; color:#e4e4e7; } }
-  main { max-width:34rem; padding:2rem; }
+         background:#09090b; color:#fafafa; }
+  main { max-width:34rem; width:90%; padding:2.5rem; background:#121215; border:1px solid rgba(255,255,255,0.08); border-radius:0.75rem; box-shadow:0 20px 40px rgba(0,0,0,0.5); }
   .status { font-size:.75rem; letter-spacing:.08em; text-transform:uppercase;
-            color:#71717a; margin:0 0 .5rem; }
-  h1 { font-size:1.5rem; margin:0 0 .75rem; font-weight:600; }
-  p { margin:0 0 1rem; }
-  .hint { color:#71717a; font-size:.9375rem; }
+            color:#a1a1aa; margin:0 0 .5rem; font-weight:600; }
+  h1 { font-size:1.6rem; margin:0 0 .75rem; font-weight:700; color:#ffffff; }
+  p { margin:0 0 1rem; color:#d4d4d8; }
+  .hint { color:#a1a1aa; font-size:.925rem; }
   code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.9em;
-         background:rgba(128,128,128,.15); padding:.15em .4em; border-radius:.25rem; }
-  footer { margin-top:2rem; font-size:.8125rem; color:#a1a1aa; }
+         background:rgba(255,255,255,.08); padding:.15em .4em; border-radius:.25rem; color:#fafafa; }
+  .actions { margin-top:1.75rem; }
+  .btn-forward {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    background: #fafafa;
+    color: #09090b;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .btn-forward:hover {
+    background: #ffffff;
+    box-shadow: 0 0 20px rgba(255,255,255,0.25);
+  }
+  footer { margin-top:2rem; font-size:.8125rem; color:#71717a; border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem; }
+  footer a { color: inherit; text-decoration: none; }
+  footer a:hover { color: #a1a1aa; }
 </style>
 </head>
 <body>
@@ -68,7 +87,16 @@ var errorPageTmpl = template.Must(template.New("error").Parse(`<!doctype html>
   <h1>{{.Title}}</h1>
   <p>{{.Detail}}</p>
   <p class="hint">{{.Hint}}</p>
-  <footer>tunnelx</footer>
+
+  <div class="actions">
+    <a href="{{.BaseURL}}" class="btn-forward">
+      Forward your own server &rarr;
+    </a>
+  </div>
+
+  <footer>
+    <a href="{{.BaseURL}}">TunnelX &middot; Fast, Secure, Public Tunnels</a>
+  </footer>
 </main>
 </body>
 </html>
@@ -92,8 +120,9 @@ func (s *Server) writeErrorPage(w http.ResponseWriter, r *http.Request, status i
 	w.WriteHeader(status)
 	data := struct {
 		errorPage
-		Status int
-	}{page, status}
+		Status  int
+		BaseURL string
+	}{page, status, s.publicBaseURL()}
 	if err := errorPageTmpl.Execute(w, data); err != nil {
 		s.log.Warn("render error page", "error", err)
 	}

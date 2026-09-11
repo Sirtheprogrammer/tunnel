@@ -158,6 +158,21 @@ func (s *Server) publicURL(label string) string {
 	return s.cfg.PublicScheme + "://" + host
 }
 
+func (s *Server) publicBaseURL() string {
+	if s.cfg.PublicURL != "" {
+		return strings.TrimRight(s.cfg.PublicURL, "/")
+	}
+	scheme := s.cfg.PublicScheme
+	if scheme == "" {
+		scheme = "https"
+	}
+	host := s.cfg.Domain
+	if p := s.cfg.PublicPort; p != 0 && !isDefaultPort(scheme, p) {
+		host = fmt.Sprintf("%s:%d", host, p)
+	}
+	return scheme + "://" + host
+}
+
 func isDefaultPort(scheme string, port int) bool {
 	return (scheme == "https" && port == 443) || (scheme == "http" && port == 80)
 }
