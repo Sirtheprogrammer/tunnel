@@ -28,15 +28,15 @@ Forwarding  https://brave-otter-7f3a.tl.codesky.tech → http://localhost:3000
 
 ## Features
 
-- ⚡ **Instant Public HTTPS Tunnels** — Expose `localhost` servers for testing webhooks, mobile APIs, OAuth callbacks, and sharing work.
-- 🌐 **Built-in Developer Web Portal** — Self-service web dashboard running at your apex domain with GitHub OAuth or email authentication.
-- 🔒 **Automatic Wildcard TLS** — Native Let's Encrypt certificates via ACME DNS-01 (Cloudflare), or custom static certs.
-- 🔌 **Full WebSocket & SSE Support** — HTTP/1.1 connection upgrades and streaming protocols are spliced transparently.
-- 👥 **Multi-Tenant & Self-Service** — User accounts, authtoken generation/revocation, concurrent tunnel limits, and subdomain reservations.
-- 🏷️ **Reserved Subdomains** — Lock in permanent subdomains (e.g., `https://myapp.yourdomain.com`) tied to your account.
-- 🔄 **Disconnect Leases** — Network hiccups don't lose your assigned subdomain (60-second grace window).
-- 🪶 **Single Pure-Go Binary** — No CGO, no external shared libraries (`modernc.org/sqlite`).
-- 🛡️ **Production-Ready Docker & Nginx** — Non-root container with TLS SNI passthrough configs included.
+- **Instant Public HTTPS Tunnels** — Expose `localhost` servers for testing webhooks, mobile APIs, OAuth callbacks, and sharing work.
+- **Built-in Developer Web Portal** — Self-service web dashboard running at your apex domain with GitHub OAuth or email authentication.
+- **Automatic Wildcard TLS** — Native Let's Encrypt certificates via ACME DNS-01 (Cloudflare), or custom static certs.
+- **Full WebSocket & SSE Support** — HTTP/1.1 connection upgrades and streaming protocols are spliced transparently.
+- **Multi-Tenant & Self-Service** — User accounts, authtoken generation/revocation, concurrent tunnel limits, and subdomain reservations.
+- **Reserved Subdomains** — Lock in permanent subdomains (e.g., `https://myapp.yourdomain.com`) tied to your account.
+- **Disconnect Leases** — Network hiccups don't lose your assigned subdomain (60-second grace window).
+- **Single Pure-Go Binary** — No CGO, no external shared libraries (`modernc.org/sqlite`).
+- **Production-Ready Docker & Nginx** — Non-root container with TLS SNI passthrough configs included.
 
 ---
 
