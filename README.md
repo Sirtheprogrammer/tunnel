@@ -1,6 +1,13 @@
-# TunnelX
+<p align="center">
+  <img src="internal/web/static/icons8-tunnel.svg" width="72" height="72" alt="TunnelX Logo">
+</p>
 
-Self-hosted HTTP tunnel server and client. Expose local development servers to the public internet via HTTPS subdomains.
+<h1 align="center">TunnelX</h1>
+
+<p align="center">
+  <strong>Self-hosted HTTP tunnel server, client, and developer web portal.</strong><br>
+  Expose local development servers to the public internet via secure HTTPS subdomains.
+</p>
 
 ```
 tunnelx http 3000
