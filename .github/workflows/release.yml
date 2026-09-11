@@ -71,31 +71,31 @@ jobs:
           CGO_ENABLED: 0
           VERSION: ${{ steps.version.outputs.VERSION }}
         run: |
-          mkdir -p dist
           EXT=""
           if [ "${{ matrix.target.os }}" = "windows" ]; then
             EXT=".exe"
           fi
 
+          PKG_NAME="tunnelx-${VERSION}-${{ matrix.target.name }}"
+          TARGET_DIR="dist/${PKG_NAME}"
+          mkdir -p "$TARGET_DIR"
+
           LDFLAGS="-s -w -X main.version=${VERSION}"
 
           # Build tunnelx client
-          go build -trimpath -ldflags "$LDFLAGS" -o "dist/tunnelx${EXT}" ./cmd/tunnelx
+          go build -trimpath -ldflags "$LDFLAGS" -o "${TARGET_DIR}/tunnelx${EXT}" ./cmd/tunnelx
 
           # Build tunnelxd daemon
-          go build -trimpath -ldflags "$LDFLAGS" -o "dist/tunnelxd${EXT}" ./cmd/tunnelxd
+          go build -trimpath -ldflags "$LDFLAGS" -o "${TARGET_DIR}/tunnelxd${EXT}" ./cmd/tunnelxd
+
+          # Copy docs
+          cp README.md "${TARGET_DIR}/" || true
+          cp LICENSE "${TARGET_DIR}/" || true
 
       - name: Package Archives
         run: |
           cd dist
           PKG_NAME="tunnelx-${{ steps.version.outputs.VERSION }}-${{ matrix.target.name }}"
-          mkdir -p "$PKG_NAME"
-          
-          # Copy binaries and documentation
-          mv tunnelx* tunnelxd* "$PKG_NAME/"
-          cp ../README.md "$PKG_NAME/" || true
-          cp ../LICENSE "$PKG_NAME/" || true
-
           if [ "${{ matrix.target.archive }}" = "zip" ]; then
             zip -r "${PKG_NAME}.zip" "$PKG_NAME"
             echo "ASSET=${PKG_NAME}.zip" >> $GITHUB_ENV
