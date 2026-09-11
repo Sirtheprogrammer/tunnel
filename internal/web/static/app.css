@@ -40,13 +40,6 @@ body {
 
 a { color: inherit; text-decoration: none; }
 
-/* Grid Background effect */
-.bg-grid {
-  background-image: linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
 /* Header & Navigation */
 .navbar {
   border-bottom: 1px solid var(--border-subtle);
@@ -160,25 +153,6 @@ a { color: inherit; text-decoration: none; }
   padding: 4rem 1rem 3rem;
   max-width: 800px;
   margin: 0 auto;
-}
-.hero-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0.85rem;
-  border-radius: 9999px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-bottom: 1.5rem;
-}
-.pill-pulse {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--accent-emerald);
-  box-shadow: 0 0 8px var(--accent-emerald);
 }
 .hero h1 {
   font-size: 3.25rem;
