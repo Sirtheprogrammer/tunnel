@@ -344,10 +344,25 @@ a { color: inherit; text-decoration: none; }
   flex-wrap: wrap;
   gap: 1rem;
 }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
 .user-badge {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
+  max-width: 100%;
+}
+.user-badge > div:last-child {
+  min-width: 0;
+  overflow: hidden;
+}
+.user-badge code {
+  word-break: break-all;
 }
 .avatar {
   width: 36px;
@@ -355,6 +370,7 @@ a { color: inherit; text-decoration: none; }
   border-radius: 50%;
   border: 1px solid var(--border-subtle);
   object-fit: cover;
+  flex-shrink: 0;
 }
 .avatar-placeholder {
   width: 36px;
@@ -366,12 +382,20 @@ a { color: inherit; text-decoration: none; }
   place-items: center;
   font-weight: 600;
   font-size: 0.85rem;
+  flex-shrink: 0;
 }
 .tabs-nav {
   display: flex;
   gap: 0.5rem;
   border-bottom: 1px solid var(--border-subtle);
   margin-bottom: 1.75rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.tabs-nav::-webkit-scrollbar {
+  display: none;
 }
 .tab-btn {
   padding: 0.65rem 1rem;
@@ -383,6 +407,7 @@ a { color: inherit; text-decoration: none; }
   cursor: pointer;
   font-weight: 500;
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 .tab-btn:hover { color: var(--text-primary); }
 .tab-btn.active {
@@ -406,10 +431,17 @@ a { color: inherit; text-decoration: none; }
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 .card-header h2 {
   font-size: 1.05rem;
   font-weight: 600;
+}
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .table {
   width: 100%;
@@ -488,6 +520,11 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--font-mono);
   font-size: 0.85rem;
   margin-top: 0.5rem;
+  overflow-x: auto;
+  gap: 0.75rem;
+}
+.code-box span {
+  word-break: break-all;
 }
 .copy-btn {
   background: none;
@@ -497,6 +534,7 @@ a { color: inherit; text-decoration: none; }
   padding: 0.25rem;
   border-radius: 0.25rem;
   transition: color 0.15s ease;
+  flex-shrink: 0;
 }
 .copy-btn:hover { color: var(--text-primary); }
 
@@ -529,5 +567,70 @@ footer {
   font-size: 0.85rem;
   color: var(--text-muted);
   margin-top: auto;
+}
+
+/* Responsive / Mobile Breakpoints */
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 2.5rem;
+  }
+  .nav-container {
+    padding: 0.75rem 1rem;
+  }
+  .container {
+    padding: 1.75rem 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+  .hero p {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .dashboard-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.25rem;
+  }
+  .header-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    width: 100%;
+    gap: 0.5rem;
+  }
+  .header-actions .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.55rem 0.5rem;
+    font-size: 0.8rem;
+  }
+  .table {
+    min-width: 540px;
+  }
+  .card-header {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .table th, .table td {
+    padding: 0.75rem 1rem;
+  }
+  .modal-box {
+    padding: 1.5rem 1.25rem;
+    width: 95%;
+  }
+  .terminal-body {
+    padding: 1rem;
+    font-size: 0.8rem;
+  }
+  .feature-card {
+    padding: 1.25rem;
+  }
+  .auth-card {
+    padding: 1.5rem;
+  }
 }
 

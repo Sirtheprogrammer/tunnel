@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <div style="display: flex; gap: 0.75rem;">
+    <div class="header-actions">
       <button class="btn btn-primary btn-sm" onclick="openModal('new-token-modal')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         New Authtoken
@@ -63,48 +63,50 @@
         <h2>Authtokens</h2>
         <span style="font-size: 0.8rem; color: var(--text-muted);">Tokens allow the <code>tunnelx</code> CLI to connect</span>
       </div>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Token / Device</th>
-            <th>Prefix</th>
-            <th>Created</th>
-            <th>Last Used</th>
-            <th style="text-align: right;">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{range .Tokens}}
+      <div class="table-container">
+        <table class="table">
+          <thead>
             <tr>
-              <td>
-                <div style="font-weight: 500; color: var(--text-primary);">{{if .Name}}{{.Name}}{{else}}<em>Unnamed Device</em>{{end}}</div>
-                <div style="font-size: 0.75rem; color: var(--text-muted);">ID: {{.ID}}</div>
-              </td>
-              <td><code>{{.Prefix}}****</code></td>
-              <td>{{.CreatedAt.Format "Jan 02, 2006"}}</td>
-              <td>
-                {{if .LastUsedAt}}
-                  {{.LastUsedAt.Format "Jan 02, 15:04"}}
-                {{else}}
-                  <span style="color: var(--text-muted); font-size: 0.8rem;">Never</span>
-                {{end}}
-              </td>
-              <td style="text-align: right;">
-                <form action="/dashboard/tokens/revoke" method="POST" onsubmit="return confirm('Revoke this token immediately?');" style="display:inline;">
-                  <input type="hidden" name="token_id" value="{{.ID}}">
-                  <button type="submit" class="btn btn-danger btn-sm">Revoke</button>
-                </form>
-              </td>
+              <th>Token / Device</th>
+              <th>Prefix</th>
+              <th>Created</th>
+              <th>Last Used</th>
+              <th style="text-align: right;">Action</th>
             </tr>
-          {{else}}
-            <tr>
-              <td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
-                No authtokens created yet. Click "New Authtoken" above to create one.
-              </td>
-            </tr>
-          {{end}}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {{range .Tokens}}
+              <tr>
+                <td>
+                  <div style="font-weight: 500; color: var(--text-primary);">{{if .Name}}{{.Name}}{{else}}<em>Unnamed Device</em>{{end}}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">ID: {{.ID}}</div>
+                </td>
+                <td><code>{{.Prefix}}****</code></td>
+                <td>{{.CreatedAt.Format "Jan 02, 2006"}}</td>
+                <td>
+                  {{if .LastUsedAt}}
+                    {{.LastUsedAt.Format "Jan 02, 15:04"}}
+                  {{else}}
+                    <span style="color: var(--text-muted); font-size: 0.8rem;">Never</span>
+                  {{end}}
+                </td>
+                <td style="text-align: right;">
+                  <form action="/dashboard/tokens/revoke" method="POST" onsubmit="return confirm('Revoke this token immediately?');" style="display:inline;">
+                    <input type="hidden" name="token_id" value="{{.ID}}">
+                    <button type="submit" class="btn btn-danger btn-sm">Revoke</button>
+                  </form>
+                </td>
+              </tr>
+            {{else}}
+              <tr>
+                <td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                  No authtokens created yet. Click "New Authtoken" above to create one.
+                </td>
+              </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -115,37 +117,39 @@
         <h2>Reserved Subdomains</h2>
         <span style="font-size: 0.8rem; color: var(--text-muted);">Only your account can connect to these subdomains</span>
       </div>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Subdomain</th>
-            <th>Public URL</th>
-            <th>Reserved At</th>
-            <th style="text-align: right;">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{range .Reservations}}
+      <div class="table-container">
+        <table class="table">
+          <thead>
             <tr>
-              <td><span style="font-weight: 600; color: var(--text-primary);">{{.Label}}</span></td>
-              <td><a href="https://{{.Label}}.{{$.Domain}}" target="_blank" class="t-url">https://{{.Label}}.{{$.Domain}}</a></td>
-              <td>{{.CreatedAt.Format "Jan 02, 2006"}}</td>
-              <td style="text-align: right;">
-                <form action="/dashboard/subdomains/release" method="POST" onsubmit="return confirm('Release this subdomain reservation?');" style="display:inline;">
-                  <input type="hidden" name="subdomain" value="{{.Label}}">
-                  <button type="submit" class="btn btn-danger btn-sm">Release</button>
-                </form>
-              </td>
+              <th>Subdomain</th>
+              <th>Public URL</th>
+              <th>Reserved At</th>
+              <th style="text-align: right;">Action</th>
             </tr>
-          {{else}}
-            <tr>
-              <td colspan="4" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
-                No reserved subdomains yet. Unreserved tunnels receive random names like <code>brave-otter-7f3a</code>.
-              </td>
-            </tr>
-          {{end}}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {{range .Reservations}}
+              <tr>
+                <td><span style="font-weight: 600; color: var(--text-primary);">{{.Label}}</span></td>
+                <td><a href="https://{{.Label}}.{{$.Domain}}" target="_blank" class="t-url">https://{{.Label}}.{{$.Domain}}</a></td>
+                <td>{{.CreatedAt.Format "Jan 02, 2006"}}</td>
+                <td style="text-align: right;">
+                  <form action="/dashboard/subdomains/release" method="POST" onsubmit="return confirm('Release this subdomain reservation?');" style="display:inline;">
+                    <input type="hidden" name="subdomain" value="{{.Label}}">
+                    <button type="submit" class="btn btn-danger btn-sm">Release</button>
+                  </form>
+                </td>
+              </tr>
+            {{else}}
+              <tr>
+                <td colspan="4" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                  No reserved subdomains yet. Unreserved tunnels receive random names like <code>brave-otter-7f3a</code>.
+                </td>
+              </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -156,46 +160,48 @@
         <h2>Recent Tunnel Sessions</h2>
         <span style="font-size: 0.8rem; color: var(--text-muted);">History of connections from your devices</span>
       </div>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Status</th>
-            <th>Subdomain</th>
-            <th>Local Target</th>
-            <th>Connected At</th>
-            <th>Ended At</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{range .Sessions}}
+      <div class="table-container">
+        <table class="table">
+          <thead>
             <tr>
-              <td>
-                {{if .EndedAt}}
-                  <span class="badge badge-ended">Closed</span>
-                {{else}}
-                  <span class="badge badge-active"><span class="badge-dot"></span> Active</span>
-                {{end}}
-              </td>
-              <td><span style="font-weight: 600; color: var(--text-primary);">{{.Subdomain}}</span></td>
-              <td><code>{{if .LocalAddr}}{{.LocalAddr}}{{else}}localhost{{end}}</code></td>
-              <td>{{.StartedAt.Format "Jan 02, 15:04:05"}}</td>
-              <td>
-                {{if .EndedAt}}
-                  {{.EndedAt.Format "Jan 02, 15:04:05"}}
-                {{else}}
-                  <span style="color: var(--accent-emerald);">Live now</span>
-                {{end}}
-              </td>
+              <th>Status</th>
+              <th>Subdomain</th>
+              <th>Local Target</th>
+              <th>Connected At</th>
+              <th>Ended At</th>
             </tr>
-          {{else}}
-            <tr>
-              <td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
-                No tunnel history found. Connect a tunnel using <code>tunnelx http 3000</code>.
-              </td>
-            </tr>
-          {{end}}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {{range .Sessions}}
+              <tr>
+                <td>
+                  {{if .EndedAt}}
+                    <span class="badge badge-ended">Closed</span>
+                  {{else}}
+                    <span class="badge badge-active"><span class="badge-dot"></span> Active</span>
+                  {{end}}
+                </td>
+                <td><span style="font-weight: 600; color: var(--text-primary);">{{.Subdomain}}</span></td>
+                <td><code>{{if .LocalAddr}}{{.LocalAddr}}{{else}}localhost{{end}}</code></td>
+                <td>{{.StartedAt.Format "Jan 02, 15:04:05"}}</td>
+                <td>
+                  {{if .EndedAt}}
+                    {{.EndedAt.Format "Jan 02, 15:04:05"}}
+                  {{else}}
+                    <span style="color: var(--accent-emerald);">Live now</span>
+                  {{end}}
+                </td>
+              </tr>
+            {{else}}
+              <tr>
+                <td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                  No tunnel history found. Connect a tunnel using <code>tunnelx http 3000</code>.
+                </td>
+              </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
