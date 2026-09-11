@@ -579,13 +579,5 @@ insecure: false    # Skip TLS certificate validation (dev only)
 - **Cause**: The dev server validates the HTTP `Host` header against `localhost`.
 - **Fix**: Run `tunnelx http 5173 --host-header rewrite`.
 
-### 6. Git error on Windows: `fatal: .git/index: index file smaller than expected`
-- **Cause**: File system cache desync on Windows during rapid file writes.
-- **Fix**:
-  ```powershell
-  Remove-Item .git/index -Force
-  git reset
-  git config core.fscache true
-  ```
 
 

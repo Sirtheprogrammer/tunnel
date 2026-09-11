@@ -140,11 +140,23 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* Layout */
+/* width: 100% matters: as a flex item of body, auto margins would otherwise
+   shrink-wrap the container to its content (and let wide content overflow). */
 .container {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 2.5rem 1.5rem;
   flex: 1;
+}
+/* Flash message rows sit above the page content and must not grow like it. */
+.container.container-flash {
+  flex: none;
+  padding-top: 1.5rem;
+  padding-bottom: 0;
+}
+.container-flash + .container {
+  padding-top: 0;
 }
 
 /* Hero Section */
@@ -333,7 +345,7 @@ a { color: inherit; text-decoration: none; }
 }
 .divider span { padding: 0 0.75rem; }
 
-/* Dashboard Tabs & Cards */
+/* Dashboard Header */
 .dashboard-header {
   display: flex;
   justify-content: space-between;
@@ -357,11 +369,29 @@ a { color: inherit; text-decoration: none; }
   min-width: 0;
   max-width: 100%;
 }
-.user-badge > div:last-child {
+.user-meta {
   min-width: 0;
-  overflow: hidden;
 }
-.user-badge code {
+.user-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+.user-email {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.user-id {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.user-id code {
   word-break: break-all;
 }
 .avatar {
@@ -384,6 +414,27 @@ a { color: inherit; text-decoration: none; }
   font-size: 0.85rem;
   flex-shrink: 0;
 }
+
+/* One-time token banner */
+.alert.token-banner {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.token-banner-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.token-banner-text {
+  font-size: 0.85rem;
+  color: #a7f3d0;
+}
+.token-banner .code-box {
+  width: 100%;
+}
+.code-box-success span { color: #6ee7b7; }
+
+/* Dashboard Tabs */
 .tabs-nav {
   display: flex;
   gap: 0.5rem;
@@ -398,6 +449,9 @@ a { color: inherit; text-decoration: none; }
   display: none;
 }
 .tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   padding: 0.65rem 1rem;
   font-size: 0.9rem;
   color: var(--text-secondary);
@@ -413,6 +467,23 @@ a { color: inherit; text-decoration: none; }
 .tab-btn.active {
   color: var(--text-primary);
   border-bottom-color: var(--text-primary);
+}
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.25rem;
+  padding: 0 0.4rem;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.06);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.tab-btn.active .tab-count {
+  background: rgba(255,255,255,0.14);
+  color: var(--text-primary);
 }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
@@ -437,6 +508,10 @@ a { color: inherit; text-decoration: none; }
 .card-header h2 {
   font-size: 1.05rem;
   font-weight: 600;
+}
+.card-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 .table-container {
   width: 100%;
@@ -463,6 +538,25 @@ a { color: inherit; text-decoration: none; }
 }
 .table tr:last-child td { border-bottom: none; }
 .table tr:hover td { background: rgba(255,255,255,0.015); }
+.table .cell-actions { text-align: right; }
+.table .table-empty {
+  text-align: center;
+  padding: 2.5rem;
+  color: var(--text-muted);
+}
+.cell-title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.cell-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.text-muted-sm {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.text-live { color: var(--accent-emerald); }
 .badge {
   display: inline-flex;
   align-items: center;
@@ -480,11 +574,38 @@ a { color: inherit; text-decoration: none; }
   background: rgba(255,255,255,0.05);
   color: var(--text-muted);
 }
+.badge-muted {
+  background: rgba(255,255,255,0.08);
+}
 .badge-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: currentColor;
+}
+
+/* Client Setup */
+.setup-steps {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+.setup-step h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+.setup-note {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+}
+.setup-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+.setup-hint code {
+  white-space: nowrap;
 }
 
 /* Modals */
@@ -495,6 +616,7 @@ a { color: inherit; text-decoration: none; }
   backdrop-filter: blur(4px);
   display: none;
   place-items: center;
+  padding: 1rem;
   z-index: 100;
 }
 .modal-backdrop.open { display: grid; }
@@ -503,9 +625,37 @@ a { color: inherit; text-decoration: none; }
   border: 1px solid var(--border-focus);
   border-radius: 0.85rem;
   max-width: 500px;
-  width: 90%;
+  width: 100%;
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
   padding: 2rem;
   box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+}
+.modal-title {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.modal-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.input-suffix {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 /* Snippets / Code blocks */
@@ -524,6 +674,7 @@ a { color: inherit; text-decoration: none; }
   gap: 0.75rem;
 }
 .code-box span {
+  min-width: 0;
   word-break: break-all;
 }
 .copy-btn {
@@ -580,6 +731,9 @@ footer {
   .container {
     padding: 1.75rem 1rem;
   }
+  .table th, .table td {
+    padding: 0.85rem 1rem;
+  }
 }
 
 @media (max-width: 640px) {
@@ -590,37 +744,192 @@ footer {
     font-size: 1rem;
     margin-bottom: 1.5rem;
   }
+  .nav-links {
+    gap: 0.75rem;
+  }
+  .container {
+    padding: 1.5rem 1rem;
+  }
+  .container.container-flash {
+    padding-top: 1rem;
+  }
+
+  /* Dashboard header: identity on top, actions as full-width buttons below */
   .dashboard-header {
     flex-direction: column;
     align-items: stretch;
     gap: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .user-name {
+    font-size: 1rem;
   }
   .header-actions {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     width: 100%;
     gap: 0.5rem;
   }
   .header-actions .btn {
     width: 100%;
-    justify-content: center;
+    min-height: 2.5rem;
     padding: 0.55rem 0.5rem;
-    font-size: 0.8rem;
+    white-space: nowrap;
   }
-  .table {
-    min-width: 540px;
+
+  /* Tabs: a 2x2 grid so every tab is visible without sideways scrolling */
+  .tabs-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    border-bottom: none;
+    overflow: visible;
+    white-space: normal;
   }
+  .tab-btn {
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.55rem 0.5rem;
+    font-size: 0.85rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 0.5rem;
+  }
+  .tab-btn.active {
+    background: var(--bg-card-hover);
+    border-color: var(--border-focus);
+  }
+
   .card-header {
     padding: 1rem;
     flex-direction: column;
     align-items: flex-start;
+    gap: 0.25rem;
   }
-  .table th, .table td {
-    padding: 0.75rem 1rem;
+
+  /* Tables: each row becomes a card, with the primary cell and its aside
+     (status badge or action button) on top and labelled fields below. */
+  .table-stack thead {
+    display: none;
+  }
+  .table-stack,
+  .table-stack tbody {
+    display: block;
+  }
+  .table-stack tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 0.75rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .table-stack tr:last-child {
+    border-bottom: none;
+  }
+  .table-stack tr:hover td {
+    background: none;
+  }
+  .table-stack td {
+    grid-column: 1 / -1;
+    min-width: 0;
+    padding: 0;
+    border-bottom: none;
+  }
+  .table-stack td.cell-primary {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    overflow-wrap: anywhere;
+  }
+  .table-stack td.cell-aside {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+  }
+  .table-stack td[data-label] {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.3rem 0;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  .table-stack td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-align: left;
+  }
+  /* Long values (URLs) read better stacked under their label */
+  .table-stack td.cell-block {
+    display: block;
+    text-align: left;
+  }
+  .table-stack td.cell-block::before {
+    display: block;
+    margin-bottom: 0.15rem;
+  }
+  .table-stack .cell-primary + td[data-label] {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .table-stack .btn-sm {
+    min-height: 2.25rem;
+    padding: 0.4rem 0.85rem;
+  }
+  .table-stack td.table-empty {
+    padding: 1.5rem 0.5rem;
+  }
+
+  /* Code snippets & copy buttons */
+  .code-box {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.8rem;
+  }
+  .copy-btn {
+    min-width: 2rem;
+    min-height: 2rem;
+  }
+  .setup-steps {
+    padding: 1rem;
+    gap: 1.25rem;
+  }
+
+  /* Modals */
+  .modal-backdrop {
+    padding: 0.75rem;
   }
   .modal-box {
     padding: 1.5rem 1.25rem;
-    width: 95%;
+  }
+  .form-input {
+    font-size: 1rem; /* 16px or larger stops iOS Safari zooming on focus */
+  }
+  .input-group {
+    flex-wrap: wrap;
+  }
+  .input-suffix {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-size: 0.85rem;
+  }
+  .modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .modal-actions .btn {
+    min-height: 2.75rem;
+    padding: 0.55rem 0.5rem;
+    white-space: nowrap;
+  }
+
+  footer {
+    padding: 1.5rem 1rem;
+    font-size: 0.8rem;
   }
   .terminal-body {
     padding: 1rem;
@@ -634,3 +943,8 @@ footer {
   }
 }
 
+@media (max-width: 400px) {
+  .brand-badge {
+    display: none;
+  }
+}

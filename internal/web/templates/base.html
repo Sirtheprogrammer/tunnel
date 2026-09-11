@@ -32,7 +32,7 @@
   </nav>
 
   {{if .FlashError}}
-    <div class="container" style="padding-top:1.5rem; padding-bottom:0;">
+    <div class="container container-flash">
       <div class="alert alert-error">
         <span>{{.FlashError}}</span>
       </div>
@@ -40,7 +40,7 @@
   {{end}}
 
   {{if .FlashSuccess}}
-    <div class="container" style="padding-top:1.5rem; padding-bottom:0;">
+    <div class="container container-flash">
       <div class="alert alert-success">
         <span>{{.FlashSuccess}}</span>
       </div>
