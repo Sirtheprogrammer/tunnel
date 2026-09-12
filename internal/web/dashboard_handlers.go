@@ -150,21 +150,42 @@ if [ ! -w "$INSTALL_DIR" ]; then
   mkdir -p "$INSTALL_DIR"
 fi
 
-echo "Downloading tunnelx for ${OS}/${ARCH}..."
-URL="https://github.com/Sirtheprogrammer/tunnel/releases/latest/download/tunnelx-${OS}-${ARCH}.tar.gz"
+REPO="Sirtheprogrammer/tunnel"
+
+# Resolve the latest release tag via the GitHub redirect instead of the
+# api.github.com JSON endpoint, which is capped at 60 unauthenticated
+# requests/hour per IP and gets exhausted easily behind shared NAT/proxies.
+# Release assets are named with the version embedded (e.g. tunnelx-v1.0.0-linux-amd64.tar.gz),
+# so the version must be known up front rather than guessed.
+EFFECTIVE_URL="$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${REPO}/releases/latest" 2>/dev/null)" || EFFECTIVE_URL=""
+VERSION="${EFFECTIVE_URL##*/}"
+if [ -z "$VERSION" ]; then
+  echo "Could not determine the latest tunnelx release version."
+  echo "You can build directly with: go install tunnel/cmd/tunnelx@latest"
+  exit 1
+fi
+
+echo "Downloading tunnelx ${VERSION} for ${OS}/${ARCH}..."
+URL="https://github.com/${REPO}/releases/download/${VERSION}/tunnelx-${VERSION}-${OS}-${ARCH}.tar.gz"
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
 if curl -fsSL "$URL" -o "$TMP_DIR/tunnelx.tar.gz" 2>/dev/null; then
   tar -xzf "$TMP_DIR/tunnelx.tar.gz" -C "$TMP_DIR"
-  chmod +x "$TMP_DIR/tunnelx"
-  mv "$TMP_DIR/tunnelx" "$INSTALL_DIR/tunnelx"
+  FOUND_BIN="$(find "$TMP_DIR" -type f -name tunnelx | head -n 1)"
+  if [ -z "$FOUND_BIN" ]; then
+    echo "Error: tunnelx binary not found in downloaded archive"
+    exit 1
+  fi
+  chmod +x "$FOUND_BIN"
+  mv "$FOUND_BIN" "$INSTALL_DIR/tunnelx"
   echo "✓ tunnelx installed successfully to $INSTALL_DIR/tunnelx"
   echo "Run 'tunnelx --help' to get started."
 else
   echo "Could not download pre-built release package from $URL"
   echo "You can build directly with: go install tunnel/cmd/tunnelx@latest"
+  exit 1
 fi
 `)
 	_, _ = w.Write([]byte(script))
