@@ -35,14 +35,18 @@ if [ ! -w "$INSTALL_DIR" ]; then
 fi
 
 # 4. Fetch Latest Release Version
-RELEASE_JSON="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null || true)"
-VERSION=""
-if [ -n "$RELEASE_JSON" ]; then
-  VERSION="$(echo "$RELEASE_JSON" | grep '"tag_name":' | head -1 | cut -d '"' -f 4)"
-fi
+# Resolve via the GitHub redirect (releases/latest -> releases/tag/<version>) instead
+# of the api.github.com JSON endpoint, which is capped at 60 unauthenticated
+# requests/hour per IP and gets exhausted easily (shared NAT/proxy, CI runners, etc.).
+# When that happens this must NOT silently fall back to a hardcoded version, since a
+# stale version will 404 once a newer release is published.
+EFFECTIVE_URL="$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${REPO}/releases/latest" 2>/dev/null)" || EFFECTIVE_URL=""
+VERSION="${EFFECTIVE_URL##*/}"
 
 if [ -z "$VERSION" ]; then
-  VERSION="v1.0.0"
+  echo "Error: Could not determine the latest release version for ${REPO}." >&2
+  echo "Check your network connection, or install manually from: https://github.com/${REPO}/releases" >&2
+  exit 1
 fi
 
 DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/${BINARY_NAME}-${VERSION}-${OS}-${ARCH}.tar.gz"
