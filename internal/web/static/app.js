@@ -47,7 +47,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // 4. Simulated Terminal Live Log Streamer (on Landing page)
+  // 4. GitHub star count (header)
+  const starsEl = document.getElementById("github-stars");
+  const starsCountEl = document.getElementById("github-stars-count");
+  if (starsEl && starsCountEl) {
+    fetch("/api/github-stars")
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => {
+        if (typeof data.stars === "number" && data.stars > 0) {
+          starsCountEl.textContent = data.stars.toLocaleString();
+          starsEl.hidden = false;
+        }
+      })
+      .catch(() => {});
+  }
+
+  // 5. Simulated Terminal Live Log Streamer (on Landing page)
   const logContainer = document.getElementById("terminal-live-logs");
   if (logContainer) {
     const sampleLogs = [

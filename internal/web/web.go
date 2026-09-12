@@ -32,6 +32,7 @@ type Handler struct {
 	templates map[string]*template.Template
 	mux       *http.ServeMux
 	log       *slog.Logger
+	stars     starsCache
 }
 
 // New creates and initializes a web portal HTTP handler.
@@ -90,6 +91,9 @@ func (h *Handler) registerRoutes() {
 	// Install scripts: curl ... | bash and irm ... | iex
 	h.mux.HandleFunc("/install.sh", h.handleInstallScript)
 	h.mux.HandleFunc("/install.ps1", h.handleInstallPS1)
+
+	// GitHub star count for the landing page header
+	h.mux.HandleFunc("/api/github-stars", h.handleGitHubStars)
 
 	// Public landing & auth
 	h.mux.HandleFunc("/", h.handleRoot)
