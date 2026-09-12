@@ -1,7 +1,6 @@
 package web
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -126,7 +125,7 @@ func (h *Handler) handleReleaseSubdomain(w http.ResponseWriter, r *http.Request,
 // handleInstallScript serves a dynamic bash script for curl -fsSL https://domain/install.sh | bash
 func (h *Handler) handleInstallScript(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	script := fmt.Sprintf(`#!/bin/sh
+	script := `#!/bin/sh
 # TunnelX CLI Installer
 set -e
 
@@ -187,7 +186,7 @@ else
   echo "You can build directly with: go install tunnel/cmd/tunnelx@latest"
   exit 1
 fi
-`)
+`
 	_, _ = w.Write([]byte(script))
 }
 
